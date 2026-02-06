@@ -1,4 +1,4 @@
-import type { TokenConfig } from "@/lib/config";
+import { defaultConfig, type TokenConfig } from "@/lib/config";
 
 const INDEX_KEY = "ts:index"; // list of saved ids
 const ITEM_PREFIX = "ts:item:";
@@ -28,9 +28,38 @@ export function saveConfig(id: string, config: TokenConfig) {
 }
 
 export function loadConfig(id: string): TokenConfig | null {
-  return safeJsonParse<TokenConfig>(localStorage.getItem(ITEM_PREFIX + id));
+  try {
+    const raw = localStorage.getItem(ITEM_PREFIX + id);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<TokenConfig>;
+    return normaliseConfig(parsed);
+  } catch {
+    return null;
+  }
 }
 
 export function listSavedIds(): string[] {
   return safeJsonParse<string[]>(localStorage.getItem(INDEX_KEY)) ?? [];
+}
+
+
+
+function normaliseConfig(partial: Partial<TokenConfig>): TokenConfig {
+  return {
+    ...defaultConfig,
+    ...partial,
+    meta: { ...defaultConfig.meta, ...(partial.meta ?? {}) },
+    typography: { ...defaultConfig.typography, ...(partial.typography ?? {}) },
+    shape: { ...defaultConfig.shape, ...(partial.shape ?? {}) },
+    effects: { ...defaultConfig.effects, ...(partial.effects ?? {}) },
+    components: { ...defaultConfig.components, ...(partial.components ?? {}) },
+    colour: {
+      ...defaultConfig.colour,
+      ...(partial.colour ?? {}),
+      brand: { ...defaultConfig.colour.brand, ...(partial.colour?.brand ?? {}) },
+      neutral: { ...defaultConfig.colour.neutral, ...(partial.colour?.neutral ?? {}) },
+      semantic: { ...defaultConfig.colour.semantic, ...(partial.colour?.semantic ?? {}) }
+    }
+  };
 }

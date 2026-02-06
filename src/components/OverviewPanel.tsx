@@ -41,7 +41,9 @@ function ColourTile({
       <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", gap: 12 }}>
         <div>
           <div style={{ fontSize: 12, opacity: 0.7 }}>{label}</div>
-          <div style={{ fontSize: 13, fontWeight: 800 }}>{value.toUpperCase()}</div>
+          <div style={{ fontSize: 13, fontWeight: 800 }}>
+  {value?.toUpperCase() ?? "—"}
+</div>
         </div>
         <div style={{ fontSize: 12, opacity: copied ? 0.95 : 0.6, fontWeight: copied ? 800 : 600 }}>
           {copied ? "Copied" : "Copy"}
@@ -63,11 +65,12 @@ export default function OverviewPanel({
   const cssVars = useMemo(() => tokensToCssVars(config), [config]);
   const cssText = useMemo(() => cssVarsToString(cssVars), [cssVars]);
 
-  const copy = async (key: string, value: string) => {
-    await navigator.clipboard.writeText(value);
-    setCopiedKey(key);
-    window.setTimeout(() => setCopiedKey(null), 900);
-  };
+const copy = async (key: string, value?: string) => {
+  if (!value) return;
+  await navigator.clipboard.writeText(value);
+  setCopiedKey(key);
+  window.setTimeout(() => setCopiedKey(null), 900);
+};
 
   return (
     <>
@@ -142,24 +145,26 @@ export default function OverviewPanel({
           </h3>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 12 }}>
-            <ColourTile
-              label="Primary"
-              value={config.colour.primary}
-              copied={copiedKey === "primary"}
-              onCopy={() => copy("primary", config.colour.primary)}
-            />
-            <ColourTile
-              label="Background"
-              value={config.colour.background}
-              copied={copiedKey === "background"}
-              onCopy={() => copy("background", config.colour.background)}
-            />
-            <ColourTile
-              label="Text"
-              value={config.colour.text}
-              copied={copiedKey === "text"}
-              onCopy={() => copy("text", config.colour.text)}
-            />
+        <ColourTile
+  label="Primary"
+  value={config.colour.brand.primary}
+  copied={copiedKey === "primary"}
+  onCopy={() => copy("primary", config.colour.brand.primary)}
+/>
+
+<ColourTile
+  label="Background"
+  value={config.colour.semantic.background}
+  copied={copiedKey === "background"}
+  onCopy={() => copy("background", config.colour.semantic.background)}
+/>
+
+<ColourTile
+  label="Text"
+  value={config.colour.semantic.text}
+  copied={copiedKey === "text"}
+  onCopy={() => copy("text", config.colour.semantic.text)}
+/>
           </div>
         </section>
 
@@ -202,16 +207,20 @@ export default function OverviewPanel({
 
             <div style={{ display: "grid", gap: 8, maxWidth: 520 }}>
               <label style={{ fontSize: 12, opacity: 0.75 }}>Text input</label>
-              <input
-                placeholder="Type here…"
-                style={{
-                  padding: 12,
-                  borderRadius: 12,
-                  border: "1px solid rgba(0,0,0,0.2)",
-                  background: "transparent",
-                  color: "inherit"
-                }}
-              />
+             <input
+  placeholder="Type here…"
+  autoComplete="off"
+  data-lpignore="true"
+  data-1p-ignore="true"
+  suppressHydrationWarning
+  style={{
+    padding: 12,
+    borderRadius: "var(--ts-radius, 12px)",
+    border: "1px solid rgba(0,0,0,0.2)",
+    background: "transparent",
+    color: "inherit"
+  }}
+/>
             </div>
 
             <div

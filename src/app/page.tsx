@@ -1,129 +1,51 @@
 "use client";
-import { createId, saveConfig } from "@/lib/storage";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { defaultConfig, type TokenConfig } from "@/lib/config";
-import {
-  tokensToCssVars,
-  cssVarsToString,
-  downloadTextFile
-} from "@/lib/tokensToCss";
+import { createId, saveConfig } from "@/lib/storage";
+import { downloadTextFile } from "@/lib/tokensToCss";
+import OverviewPanel from "@/components/OverviewPanel";
+import { contrastRatio, roundRatio } from "@/lib/contrast/contrast";
+import { getWcagResult } from "@/lib/contrast/wcag";
 
-function ColourTile({
-  label,
-  value,
-  copied,
-  onCopy
-}: {
-  label: string;
-  value: string;
-  copied: boolean;
-  onCopy: () => void;
-}) {
+const ratio = contrastRatio("#111827", "#FFFFFF");
+console.log(roundRatio(ratio, 1), getWcagResult(ratio, { fontSizePx: 16 }));
+export default function Home() {
+  const [config, setConfig] = useState<TokenConfig>(defaultConfig);
+  const [saveId, setSaveId] = useState<string | null>(null);
+
   return (
-    <button
-      type="button"
-      onClick={onCopy}
+    <div
       style={{
-        width: "100%",
-        textAlign: "left",
-        border: "1px solid rgba(0,0,0,0.12)",
-        borderRadius: 12,
-        padding: 12,
-        background: "rgba(255,255,255,0.6)",
-        cursor: "pointer"
+        background: "var(--ts-color-bg)",
+        color: "var(--ts-color-text)",
+        fontFamily: "var(--ts-font-body)",
+        fontSize: "var(--ts-font-size-base)",
+        minHeight: "100vh",
+        padding: 24
       }}
-      title="Click to copy"
     >
       <div
         style={{
-          height: 56,
-          borderRadius: 10,
-          background: value,
-          border: "1px solid rgba(0,0,0,0.06)"
-        }}
-      />
-      <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between" }}>
-        <div>
-          <div style={{ fontSize: 12, opacity: 0.7 }}>{label}</div>
-          <div style={{ fontSize: 13, fontWeight: 700 }}>{value.toUpperCase()}</div>
-        </div>
-        <div style={{ fontSize: 12, opacity: copied ? 0.9 : 0.6, fontWeight: copied ? 800 : 600 }}>
-          {copied ? "Copied" : "Copy"}
-        </div>
-      </div>
-    </button>
-  );
-}
-
-export default function Home() {
-  const [config, setConfig] = useState<TokenConfig>(defaultConfig);
-const [saveId, setSaveId] = useState<string | null>(null);
-  const cssVars = useMemo(() => tokensToCssVars(config), [config]);
-  const cssText = useMemo(() => cssVarsToString(cssVars), [cssVars]);
-
-const [copiedKey, setCopiedKey] = useState<string | null>(null);
-
-const copy = async (key: string, value: string) => {
-  await navigator.clipboard.writeText(value);
-  setCopiedKey(key);
-  window.setTimeout(() => setCopiedKey(null), 900);
-};
-  return (
-    <>
-      {/* Inject token CSS variables */}
-      <style>{cssText}</style>
-
-      <div
-        style={{
-          background: "var(--ts-color-bg)",
-          color: "var(--ts-color-text)",
-          fontFamily: "var(--ts-font-body)",
-          fontSize: "var(--ts-font-size-base)",
-          minHeight: "100vh",
-          padding: 24
+          display: "grid",
+          gridTemplateColumns: "340px 1fr",
+          gap: 24,
+          alignItems: "start"
         }}
       >
-        <div
+        {/* Editor */}
+        <aside
           style={{
-            display: "grid",
-            gridTemplateColumns: "320px 1fr",
-            gap: 24
+            border: "1px solid rgba(0,0,0,0.12)",
+            borderRadius: 16,
+            padding: 16,
+            background: "rgba(255,255,255,0.55)"
           }}
         >
-          {/* Editor */}
-          <aside
-            style={{
-              border: "1px solid rgba(0,0,0,0.12)",
-              borderRadius: 12,
-              padding: 16
-            }}
-          >
-            <h1 style={{ margin: 0, fontSize: 18 }}>Editor</h1>
+          <h1 style={{ margin: 0, fontSize: 18 }}>Editor</h1>
 
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(cssText);
-                } catch (e) {
-                  console.error(e);
-                }
-              }}
-              style={{
-                marginTop: 12,
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: 12,
-                border: "1px solid rgba(0,0,0,0.2)",
-                background: "transparent",
-                cursor: "pointer",
-                fontWeight: 600
-              }}
-            >
-              Copy CSS variables
-            </button>
-
+          {/* Actions */}
+          <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
             <button
               type="button"
               onClick={() =>
@@ -134,137 +56,216 @@ const copy = async (key: string, value: string) => {
                 )
               }
               style={{
-                marginTop: 10,
                 width: "100%",
                 padding: "10px 12px",
                 borderRadius: 12,
                 border: "1px solid rgba(0,0,0,0.2)",
                 background: "transparent",
                 cursor: "pointer",
-                fontWeight: 600
+                fontWeight: 700
               }}
             >
               Download tokens.json
             </button>
-<button
-  type="button"
-  onClick={async () => {
-    const id = saveId ?? createId();
-    saveConfig(id, config);
-    saveConfig(id, config);
-console.log("Saved id:", id);
-console.log("Saved item:", localStorage.getItem("ts:item:" + id));
-    setSaveId(id);
 
-    const url = `${window.location.origin}/view/${id}`;
-    await navigator.clipboard.writeText(url);
-  }}
-  style={{
-    marginTop: 10,
-    width: "100%",
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(0,0,0,0.2)",
-    background: "transparent",
-    cursor: "pointer",
-    fontWeight: 600
-  }}
->
-  Save + copy local link
-</button>
-            <label style={{ display: "block", marginTop: 16 }}>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>Title</div>
+            <button
+              type="button"
+              onClick={async () => {
+                const id = saveId ?? createId();
+                saveConfig(id, config);
+                setSaveId(id);
+
+                const url = `${window.location.origin}/view/${id}`;
+                try {
+                  await navigator.clipboard.writeText(url);
+                } catch (e) {
+                  console.error(e);
+                }
+              }}
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: 12,
+                border: "1px solid rgba(0,0,0,0.2)",
+                background: "transparent",
+                cursor: "pointer",
+                fontWeight: 700
+              }}
+            >
+              Save + copy local link
+            </button>
+
+            {saveId && (
+              <a
+                href={`/view/${saveId}`}
+                style={{
+                  fontSize: 12,
+                  opacity: 0.8,
+                  textDecoration: "underline"
+                }}
+              >
+                Open saved view
+              </a>
+            )}
+          </div>
+
+          {/* Meta */}
+          <label style={{ display: "block", marginTop: 16 }}>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>Title</div>
+            <input
+  data-lpignore="true"
+  data-1p-ignore="true"
+  suppressHydrationWarning 
+              placeholder="Token Studio"
+              value={config.meta.title}
+              onChange={(e) =>
+                setConfig((c) => ({
+                  ...c,
+                  meta: { ...c.meta, title: e.target.value }
+                }))
+              }
+              autoComplete="off"
+              style={{
+                width: "100%",
+                padding: 12,
+                borderRadius: 12,
+                border: "1px solid rgba(0,0,0,0.2)",
+                background: "transparent",
+                color: "inherit",
+                marginTop: 6
+              }}
+            />
+          </label>
+
+          {/* Colours */}
+          <div style={{ marginTop: 18 }}>
+            <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 700 }}>
+              Colours
+            </div>
+
+            <label style={{ display: "block", marginTop: 12 }}>
+              <div style={{ fontSize: 12, opacity: 0.75 }}>Brand primary</div>
               <input
-                placeholder="Type here…"
-                value={config.meta.title}
+                type="color"
+                value={config.colour.brand.primary}
                 onChange={(e) =>
                   setConfig((c) => ({
                     ...c,
-                    meta: { ...c.meta, title: e.target.value }
+                    colour: {
+                      ...c.colour,
+                      brand: {
+                        ...c.colour.brand,
+                        primary: e.target.value
+                      }
+                    }
                   }))
                 }
-                autoComplete="off"
-                data-lpignore="true"
-                data-1p-ignore="true"
-                suppressHydrationWarning
+                style={{
+                  width: "100%",
+                  height: 40,
+                  padding: 0,
+                  border: "none",
+                  background: "transparent",
+                  marginTop: 6
+                }}
+              />
+            </label>
+
+            <label style={{ display: "block", marginTop: 12 }}>
+              <div style={{ fontSize: 12, opacity: 0.75 }}>Background</div>
+              <input
+
+                type="color"
+                value={config.colour.semantic.background}
+                onChange={(e) =>
+                  setConfig((c) => ({
+                    ...c,
+                    colour: {
+                      ...c.colour,
+                      semantic: {
+                        ...c.colour.semantic,
+                        background: e.target.value
+                      }
+                    }
+                  }))
+                }
+                style={{
+                  width: "100%",
+                  height: 40,
+                  padding: 0,
+                  border: "none",
+                  background: "transparent",
+                  marginTop: 6
+                }}
+              />
+            </label>
+
+            <label style={{ display: "block", marginTop: 12 }}>
+              <div style={{ fontSize: 12, opacity: 0.75 }}>Text</div>
+              <input
+                type="color"
+                value={config.colour.semantic.text}
+                onChange={(e) =>
+                  setConfig((c) => ({
+                    ...c,
+                    colour: {
+                      ...c.colour,
+                      semantic: {
+                        ...c.colour.semantic,
+                        text: e.target.value
+                      }
+                    }
+                  }))
+                }
+                style={{
+                  width: "100%",
+                  height: 40,
+                  padding: 0,
+                  border: "none",
+                  background: "transparent",
+                  marginTop: 6
+                }}
+              />
+            </label>
+          </div>
+
+          {/* Typography */}
+          <div style={{ marginTop: 18 }}>
+            <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 700 }}>
+              Typography
+            </div>
+
+            <label style={{ display: "block", marginTop: 12 }}>
+              <div style={{ fontSize: 12, opacity: 0.75 }}>Font family</div>
+             <input
+  value={config.typography.fontFamily}
+  onChange={(e) =>
+    setConfig((c) => ({
+      ...c,
+      typography: { ...c.typography, fontFamily: e.target.value }
+    }))
+  }
+  autoComplete="off"
+  data-lpignore="true"
+  data-1p-ignore="true"
+  suppressHydrationWarning
+  
                 style={{
                   width: "100%",
                   padding: 12,
                   borderRadius: 12,
                   border: "1px solid rgba(0,0,0,0.2)",
                   background: "transparent",
-                  color: "inherit"
+                  color: "inherit",
+                  marginTop: 6
                 }}
               />
             </label>
 
-            <label style={{ display: "block", marginTop: 16 }}>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>Primary colour</div>
-              <input
-                type="color"
-                value={config.colour.primary ?? defaultConfig.colour.primary}
-
-                onChange={(e) =>
-                  setConfig((c) => ({
-                    ...c,
-                    colour: { ...c.colour, primary: e.target.value }
-                  }))
-                }
-                style={{
-                  width: "100%",
-                  height: 40,
-                  padding: 0,
-                  border: "none",
-                  background: "transparent"
-                }}
-              />
-            </label>
-
-            <label style={{ display: "block", marginTop: 16 }}>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>Background</div>
-              <input
-                type="color"
-                value={config.colour.background ?? defaultConfig.colour.background}
-                onChange={(e) =>
-                  setConfig((c) => ({
-                    ...c,
-                    colour: { ...c.colour, background: e.target.value }
-                  }))
-                }
-                style={{
-                  width: "100%",
-                  height: 40,
-                  padding: 0,
-                  border: "none",
-                  background: "transparent"
-                }}
-              />
-            </label>
-
-            <label style={{ display: "block", marginTop: 16 }}>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>Text</div>
-              <input
-                type="color"
-                  value={config.colour.text ?? defaultConfig.colour.text}
-
-                onChange={(e) =>
-                  setConfig((c) => ({
-                    ...c,
-                    colour: { ...c.colour, text: e.target.value }
-                  }))
-                }
-                style={{
-                  width: "100%",
-                  height: 40,
-                  padding: 0,
-                  border: "none",
-                  background: "transparent"
-                }}
-              />
-            </label>
-
-            <label style={{ display: "block", marginTop: 16 }}>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>Base font size</div>
+            <label style={{ display: "block", marginTop: 12 }}>
+              <div style={{ fontSize: 12, opacity: 0.75 }}>
+                Base font size ({config.typography.baseSizePx}px)
+              </div>
               <input
                 type="range"
                 min={12}
@@ -279,83 +280,44 @@ console.log("Saved item:", localStorage.getItem("ts:item:" + id));
                     }
                   }))
                 }
-                style={{ width: "100%" }}
+                style={{ width: "100%", marginTop: 6 }}
               />
-              <div style={{ fontSize: 12, opacity: 0.8 }}>
-                {config.typography.baseSizePx}px
-              </div>
             </label>
-          </aside>
+          </div>
 
-          {/* Preview */}
-          <main
-            style={{
-              border: "1px solid rgba(0,0,0,0.12)",
-              borderRadius: 12,
-              padding: 24
-            }}
-          >
-            <h2 style={{ marginTop: 0 }}>{config.meta.title}</h2>
-            <p style={{ maxWidth: 520, opacity: 0.9 }}>
-              This is the smallest Foundation loop: edit a few tokens and see the
-              UI update instantly.
-            </p>
-
-            <button
-              style={{
-                background: "var(--ts-color-primary)",
-                color: "#fff",
-                border: "none",
-                borderRadius: 12,
-                padding: "12px 16px",
-                cursor: "pointer",
-                fontWeight: 600
-              }}
-            >
-              Primary button
-            </button>
-
-            <div style={{ marginTop: 24, display: "grid", gap: 12, maxWidth: 520 }}>
-              <label style={{ fontSize: 12, opacity: 0.8 }}>Example input</label>
-              <input
-                placeholder="Type here…"
-                suppressHydrationWarning
-                style={{
-                  padding: 12,
-                  borderRadius: 12,
-                  border: "1px solid rgba(0,0,0,0.2)",
-                  background: "transparent",
-                  color: "inherit"
-                }}
-              />
+          {/* Shape */}
+          <div style={{ marginTop: 18 }}>
+            <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 700 }}>
+              Shape
             </div>
-            <section style={{ marginTop: 28 }}>
-  <h3 style={{ margin: "0 0 10px", fontSize: 14, opacity: 0.85 }}>Colours</h3>
 
-  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 12 }}>
-    <ColourTile
-      label="Primary"
-      value={config.colour.primary ?? defaultConfig.colour.primary}
-      copied={copiedKey === "primary"}
-      onCopy={() => copy("primary", config.colour.primary ?? defaultConfig.colour.primary)}
-    />
-    <ColourTile
-      label="Background"
-      value={config.colour.background ?? defaultConfig.colour.background}
-      copied={copiedKey === "background"}
-      onCopy={() => copy("background", config.colour.background ?? defaultConfig.colour.background)}
-    />
-    <ColourTile
-      label="Text"
-      value={config.colour.text ?? defaultConfig.colour.text}
-      copied={copiedKey === "text"}
-      onCopy={() => copy("text", config.colour.text ?? defaultConfig.colour.text)}
-    />
-  </div>
-</section>
-          </main>
-        </div>
+            <label style={{ display: "block", marginTop: 12 }}>
+              <div style={{ fontSize: 12, opacity: 0.75 }}>
+                Border radius ({config.shape.radiusPx}px)
+              </div>
+              <input
+                
+                type="range"
+                min={6}
+                max={24}
+                value={config.shape.radiusPx}
+                onChange={(e) =>
+                  setConfig((c) => ({
+                    ...c,
+                    shape: { ...c.shape, radiusPx: Number(e.target.value) }
+                  }))
+                }
+                style={{ width: "100%", marginTop: 6 }}
+              />
+            </label>
+          </div>
+        </aside>
+
+        {/* Overview */}
+        <main style={{ display: "grid", gap: 24 }}>
+          <OverviewPanel config={config} showActions />
+        </main>
       </div>
-    </>
+    </div>
   );
 }

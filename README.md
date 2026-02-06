@@ -1,3 +1,15 @@
+# Foundation
+
+Foundation is a React + Next.js project exploring design tokens as a single source of truth for UI systems.
+
+It allows users to:
+- Define colour, typography, and shape tokens
+- Preview UI components in real time via CSS variables
+- Save configurations locally and generate shareable read-only links
+- Export tokens for reuse across projects
+
+The project focuses on architecture, state modelling, and token-driven UI rather than visual polish.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
