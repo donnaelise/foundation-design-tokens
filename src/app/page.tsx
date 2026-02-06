@@ -7,6 +7,7 @@ import { downloadTextFile } from "@/lib/tokensToCss";
 import OverviewPanel from "@/components/OverviewPanel";
 import { contrastRatio, roundRatio } from "@/lib/contrast/contrast";
 import { getWcagResult } from "@/lib/contrast/wcag";
+import ValidatorPanel from "@/components/ValidatorPanel";
 
 const ratio = contrastRatio("#111827", "#FFFFFF");
 console.log(roundRatio(ratio, 1), getWcagResult(ratio, { fontSizePx: 16 }));
@@ -316,6 +317,7 @@ export default function Home() {
         {/* Overview */}
         <main style={{ display: "grid", gap: 24 }}>
           <OverviewPanel config={config} showActions />
+          <ValidatorPanel config={config} />
         </main>
       </div>
     </div>
